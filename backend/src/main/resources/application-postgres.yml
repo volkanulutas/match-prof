@@ -1,0 +1,15 @@
+spring:
+  datasource:
+    # Örnek: jdbc:postgresql://HOST/DBNAME?sslmode=require
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/dersbul}
+    username: ${DB_USER:dersbul}
+    password: ${DB_PASSWORD:dersbul}
+    hikari:
+      maximum-pool-size: 5          # ücretsiz veritabanı bağlantı sınırlarına saygı
+      minimum-idle: 0
+      connection-timeout: 30000
+      initialization-fail-timeout: 60000   # uykudaki (scale-to-zero) veritabanının uyanmasını bekler
+      max-lifetime: 600000
+  h2:
+    console:
+      enabled: false
