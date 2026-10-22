@@ -1,6 +1,7 @@
 package com.dersbul.dto;
 
 import com.dersbul.domain.*;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
 import java.time.*;
@@ -23,7 +24,7 @@ public final class Dtos {
     public record AuthRes(String token, UserRes user) {}
 
     // ---- catalog
-    public record CategoryRes(Long id, String name, String slug, String groupName) {}
+    public record CategoryRes(Long id, String name, String slug, String groupName, long listingCount) {}
     public record QualificationReq(@NotBlank(message = "Başlık zorunlu") @Size(max = 200) String title) {}
     public record QualificationRes(Long id, String title, QualificationStatus status) {}
 
@@ -49,15 +50,19 @@ public final class Dtos {
 
     // ---- requests, messages, sessions
     public record StatusReq(@NotBlank String status) {}
+    public record SlotReq(@NotNull Instant startsAt, @NotNull Instant endsAt) {}
+    public record SlotRes(Long id, Instant startsAt, Instant endsAt, boolean chosen) {}
+    public record AcceptReq(Long slotId) {}
     public record RequestReq(
         @NotNull Long listingId,
         @NotBlank(message = "Ne öğrenmek istediğinizi kısaca yazın") @Size(max = 2000) String message,
         String studentLevel,
-        @NotNull(message = "Ders biçimi seçin") LessonMode mode) {}
+        @NotNull(message = "Ders biçimi seçin") LessonMode mode,
+        @Valid @Size(max = 3, message = "En fazla 3 zaman önerebilirsiniz") List<SlotReq> slots) {}
     public record RequestRes(
         Long id, Long listingId, String listingTitle, Long studentId, String studentName,
         Long teacherId, String teacherName, String message, String studentLevel, LessonMode mode,
-        RequestStatus status, Instant createdAt, Long conversationId) {}
+        RequestStatus status, Instant createdAt, Long conversationId, List<SlotRes> slots) {}
 
     public record MessageReq(@NotBlank @Size(max = 2000) String body) {}
     public record MessageRes(Long id, Long senderId, String senderName, String body, Instant createdAt) {}
@@ -74,7 +79,7 @@ public final class Dtos {
     public record BuyReq(@NotNull Plan plan, Integer months) {}
     public record SubscriptionRes(Long id, Plan plan, BigDecimal amountTry, Instant startsAt, Instant endsAt, boolean active) {}
     public record PlanRes(Plan plan, String title, BigDecimal monthlyTry, BigDecimal yearlyTry, String benefit) {}
-    public record NotificationRes(Long id, String content, boolean seen, Instant createdAt) {}
+    public record NotificationRes(Long id, String content, String link, boolean seen, Instant createdAt) {}
 
     // ---- moderation / admin
     public record ReportReq(@NotBlank(message = "Şikâyet nedenini yazın") @Size(max = 1000) String reason) {}

@@ -1,5 +1,7 @@
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Header from './components/Header.jsx';
+import CompareBar from './components/CompareBar.jsx';
+import Compare from './pages/Compare.jsx';
 import { useAuth } from './auth.jsx';
 import Home from './pages/Home.jsx';
 import Search from './pages/Search.jsx';
@@ -31,6 +33,7 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/ara" element={<Search />} />
           <Route path="/ilan/:id" element={<ListingDetail />} />
+          <Route path="/karsilastir" element={<Compare />} />
           <Route path="/giris" element={<Login />} />
           <Route path="/kayit" element={<Register />} />
           <Route path="/talepler" element={<Guard roles={['STUDENT', 'TEACHER']}><Requests /></Guard>} />
@@ -43,6 +46,7 @@ export default function App() {
           <Route path="*" element={<p className="pad">Sayfa bulunamadı.</p>} />
         </Routes>
       </main>
+      <CompareBar />
       <footer className="footer">
         <span>Dersbul — örnek proje. Fiyatlar ve ödeme akışı demodur.</span>
       </footer>

@@ -15,6 +15,7 @@ public class CatalogController {
     private final ListingService listings;
     private final ReviewService reviews;
     private final TeacherProfileService profile;
+    private final SchedulingService scheduling;
 
     @GetMapping("/categories")
     public List<CategoryRes> categories() { return listings.categories(); }
@@ -38,6 +39,16 @@ public class CatalogController {
 
     @GetMapping("/listings/{id}/reviews")
     public List<ReviewRes> reviews(@PathVariable Long id) { return reviews.forListing(id); }
+
+    /** Öğretmenin önümüzdeki günlerdeki boş ders zamanları (müsaitlik aralıklarından üretilir). */
+    @GetMapping("/teachers/{teacherId}/slots")
+    public List<SlotRes> slots(@PathVariable Long teacherId,
+                               @RequestParam(defaultValue = "14") int days,
+                               @RequestParam(defaultValue = "60") int minutes) {
+        int d = Math.min(Math.max(days, 1), 28);
+        int m = (minutes < 15 || minutes > 240) ? 60 : minutes;
+        return scheduling.freeSlots(teacherId, d, m);
+    }
 
     @GetMapping("/teachers/{teacherId}/availability")
     public List<AvailabilityRes> availability(@PathVariable Long teacherId) { return profile.availabilityOf(teacherId); }

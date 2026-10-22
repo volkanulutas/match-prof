@@ -10,6 +10,12 @@ public interface LessonSessionRepository extends JpaRepository<LessonSession, Lo
     List<LessonSession> findByRequestStudentIdOrderByStartsAtDesc(Long studentId);
     List<LessonSession> findByRequestListingTeacherIdOrderByStartsAtDesc(Long teacherId);
 
+    @Query("select s from LessonSession s where s.request.listing.teacher.id = :tid "
+         + "and s.status = com.dersbul.domain.SessionStatus.SCHEDULED and s.startsAt < :end and s.endsAt > :start")
+    List<LessonSession> findScheduled(@Param("tid") Long teacherId, @Param("start") Instant start, @Param("end") Instant end);
+
+    List<LessonSession> findByStatusAndReminderSentFalseAndStartsAtBefore(SessionStatus status, Instant before);
+
     @Query("select count(s) > 0 from LessonSession s where s.request.listing.teacher.id = :tid "
          + "and s.status = com.dersbul.domain.SessionStatus.SCHEDULED and s.startsAt < :end and s.endsAt > :start")
     boolean hasConflict(@Param("tid") Long teacherId, @Param("start") Instant start, @Param("end") Instant end);

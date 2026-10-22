@@ -37,3 +37,5 @@ app:
     student-pass-try: 259
     teacher-pass-monthly-try: 149
     teacher-pass-yearly-try: 650
+  # true ise öğrencinin mesaj yazabilmesi için aktif Öğrenci Pass gerekir (varsayılan: sohbet serbest).
+  student-pass-required-for-chat: ${STUDENT_PASS_REQUIRED:false}

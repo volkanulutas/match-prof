@@ -28,4 +28,6 @@ public class TeacherListing {
     private double avgRating;
     private int reviewCount;
     private Instant createdAt = Instant.now();
+    /** Aramada kullanılan, Türkçe karakterleri sadeleştirilmiş küçük harfli metin (başlık, açıklama, kategori, öğretmen, şehir). */
+    @Column(length = 6000) private String searchText;
 }

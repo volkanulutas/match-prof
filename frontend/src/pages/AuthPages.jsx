@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth.jsx';
 import { Alert } from '../components/Bits.jsx';
+import CitySelect from '../components/CitySelect.jsx';
 
 export function Login() {
   const { login } = useAuth();
@@ -52,7 +53,7 @@ export function Register() {
       </div>
       <label>Ad soyad<input required value={f.fullName} onChange={(e) => setF({ ...f, fullName: e.target.value })} autoComplete="name" /></label>
       <label>E-posta<input type="email" required value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} autoComplete="email" /></label>
-      <label>Şehir<input value={f.city} onChange={(e) => setF({ ...f, city: e.target.value })} autoComplete="address-level2" /></label>
+      <label>İl<CitySelect required value={f.city} onChange={(v) => setF({ ...f, city: v })} /></label>
       <label>Şifre (en az 8 karakter)<input type="password" required minLength={8} value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} autoComplete="new-password" /></label>
       <button className="btn primary big">Kayıt ol</button>
       <p className="muted small">Zaten hesabın var mı? <Link to="/giris">Giriş yap</Link></p>

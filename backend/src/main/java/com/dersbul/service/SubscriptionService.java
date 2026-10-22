@@ -72,7 +72,7 @@ public class SubscriptionService {
         if (r.plan() == Plan.TEACHER_PASS) listings.setBoosted(me.getId(), true);
         notifications.send(me, r.plan() == Plan.TEACHER_PASS
             ? "Professional Pass etkin. İlanlarınız öne çıkarılıyor."
-            : "Öğrenci Pass etkin. Artık mesaj gönderebilirsiniz.");
+            : "Öğrenci Pass etkin.", "/pass");
         return new SubscriptionRes(s.getId(), s.getPlan(), s.getAmountTry(), s.getStartsAt(), s.getEndsAt(), true);
     }
 }

@@ -15,6 +15,7 @@ public class Mapper {
     private final SubscriptionRepository subs;
     private final ConversationRepository conversations;
     private final ReviewRepository reviews;
+    private final RequestSlotRepository requestSlots;
 
     public UserRes user(User u) {
         boolean pass = false;
@@ -45,7 +46,9 @@ public class Mapper {
         User t = r.getListing().getTeacher();
         return new RequestRes(r.getId(), r.getListing().getId(), r.getListing().getTitle(),
             r.getStudent().getId(), r.getStudent().getFullName(), t.getId(), t.getFullName(),
-            r.getMessage(), r.getStudentLevel(), r.getMode(), r.getStatus(), r.getCreatedAt(), convId);
+            r.getMessage(), r.getStudentLevel(), r.getMode(), r.getStatus(), r.getCreatedAt(), convId,
+            requestSlots.findByRequestIdOrderByStartsAtAsc(r.getId()).stream()
+                .map(s -> new SlotRes(s.getId(), s.getStartsAt(), s.getEndsAt(), s.isChosen())).toList());
     }
 
     public SessionRes session(LessonSession s) {

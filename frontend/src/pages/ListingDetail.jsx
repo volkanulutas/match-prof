@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { api, money, MODES, DAYS } from '../api.js';
 import { useAuth } from '../auth.jsx';
-import { Stars, Alert, Empty } from '../components/Bits.jsx';
+import { Stars, Alert, Empty, CompareToggle } from '../components/Bits.jsx';
+import SlotPicker from '../components/SlotPicker.jsx';
 
 export default function ListingDetail() {
   const { id } = useParams();
@@ -14,6 +15,7 @@ export default function ListingDetail() {
   const [err, setErr] = useState('');
   const [msg, setMsg] = useState('');
   const [form, setForm] = useState({ message: '', studentLevel: '', mode: '' });
+  const [slots, setSlots] = useState([]);
   const [report, setReport] = useState(null);
 
   useEffect(() => {
@@ -33,9 +35,9 @@ export default function ListingDetail() {
   const send = async (e) => {
     e.preventDefault(); setErr(''); setMsg('');
     try {
-      await api('/requests', { method: 'POST', body: { listingId: l.id, ...form } });
-      setMsg('Talebiniz gönderildi. Öğretmen kabul ettiğinde bildirim alacaksınız.');
-      setTimeout(() => nav('/talepler'), 1200);
+      const r = await api('/requests', { method: 'POST', body: { listingId: l.id, ...form, slots } });
+      setMsg('Talebiniz gönderildi. Sohbet ekranına yönlendiriliyorsunuz…');
+      setTimeout(() => nav(`/mesajlar/${r.id}`), 700);
     } catch (e2) { setErr(e2.message); }
   };
 
@@ -56,7 +58,7 @@ export default function ListingDetail() {
             <strong>{l.teacherName}</strong>
             <div><Stars value={l.avgRating} count={l.reviewCount} /></div>
           </div>
-          {l.boosted && <span className="badge gold">Öne çıkan</span>}
+          {l.boosted && <span className="badge pro">Öne çıkan</span>}
         </div>
 
         <div className="chips">
@@ -83,7 +85,7 @@ export default function ListingDetail() {
           </>
         )}
 
-        <h2>Müsait olduğu saatler</h2>
+        <h2>Haftalık müsaitlik</h2>
         {avail.length === 0 ? <Empty>Öğretmen henüz müsaitlik girmemiş. Talepte uygun saatlerinizi yazın.</Empty> : (
           <ul className="plain">
             {avail.map((a) => <li key={a.id}>{DAYS[a.weekday]}: {a.startTime.slice(0, 5)} – {a.endTime.slice(0, 5)}</li>)}
@@ -99,7 +101,7 @@ export default function ListingDetail() {
         ))}
 
         {user && user.id !== l.teacherId && (
-          <p className="small">
+          <div className="small">
             {report === null
               ? <button className="linkbtn" onClick={() => setReport('')}>Bu ilanı şikâyet et</button>
               : (
@@ -109,12 +111,13 @@ export default function ListingDetail() {
                     <button type="button" className="linkbtn" onClick={() => setReport(null)}>Vazgeç</button></div>
                 </form>
               )}
-          </p>
+          </div>
         )}
       </article>
 
       <aside className="card sticky">
         <div className="price big">{money(l.hourlyRate)}<span className="muted small"> / saat</span></div>
+        <CompareToggle id={l.id} />
         <Alert>{err}</Alert>
         <Alert kind="ok">{msg}</Alert>
 
@@ -132,11 +135,13 @@ export default function ListingDetail() {
             <label>Seviyeniz
               <input value={form.studentLevel} onChange={(e) => setForm({ ...form, studentLevel: e.target.value })} placeholder="ör. 11. sınıf, başlangıç" />
             </label>
-            <label>Ne öğrenmek istiyorsunuz?
+            <SlotPicker teacherId={l.teacherId} selected={slots} onChange={setSlots} />
+            <label>Mesajınız
               <textarea required value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })}
-                        placeholder="Hedefiniz ve uygun olduğunuz gün/saatler" />
+                        placeholder="Hedefiniz ve öğretmene iletmek istedikleriniz" />
             </label>
             <button className="btn primary big">Talep gönder</button>
+            <p className="muted small">Talebiniz gönderilince öğretmenle sohbet açılır. Öğretmen seçtiğiniz zamanlardan birini onaylayınca ders oluşur.</p>
           </form>
         )}
       </aside>

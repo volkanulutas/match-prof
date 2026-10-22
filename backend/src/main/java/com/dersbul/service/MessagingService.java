@@ -4,9 +4,10 @@ import com.dersbul.domain.*;
 import com.dersbul.dto.Dtos.*;
 import com.dersbul.realtime.PushEvent;
 import com.dersbul.repo.*;
-import org.springframework.context.ApplicationEventPublisher;
 import com.dersbul.web.ApiException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,7 +16,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Sohbet, talep kabul edilince açılır. Öğrencinin mesaj gönderebilmesi için aktif Öğrenci Pass gerekir.
+ * Sohbet, ders talebi gönderildiği anda açılır (talep metni ilk mesajdır); öğretmen kabul etmeden de yazışılabilir.
+ * app.student-pass-required-for-chat=true ise öğrencinin yazabilmesi için aktif Öğrenci Pass gerekir.
  */
 @Service
 @RequiredArgsConstructor
@@ -28,6 +30,9 @@ public class MessagingService {
     private final NotificationService notifications;
     private final ApplicationEventPublisher events;
 
+    @Value("${app.student-pass-required-for-chat:false}")
+    private boolean passRequired;
+
     @Transactional(readOnly = true)
     public List<MessageRes> list(User me, Long requestId) {
         participantRequest(me, requestId);
@@ -38,16 +43,23 @@ public class MessagingService {
 
     public MessageRes send(User me, Long requestId, String body) {
         LessonRequest r = participantRequest(me, requestId);
-        Conversation c = conversations.findByRequestId(requestId)
-            .orElseThrow(() -> new ApiException(HttpStatus.CONFLICT, "Sohbet, talep kabul edildikten sonra açılır"));
-        if (me.getRole() == Role.STUDENT
+        if (r.getStatus() != RequestStatus.PENDING && r.getStatus() != RequestStatus.ACCEPTED)
+            throw new ApiException(HttpStatus.CONFLICT, "Bu talep kapandığı için mesaj gönderilemez");
+        if (passRequired && me.getRole() == Role.STUDENT
             && !subs.existsByUserIdAndPlanAndEndsAtAfter(me.getId(), Plan.STUDENT_PASS, Instant.now()))
             throw new ApiException(HttpStatus.PAYMENT_REQUIRED, "Mesaj göndermek için Öğrenci Pass gerekli");
+
+        Conversation c = conversations.findByRequestId(requestId).orElseGet(() -> {
+            Conversation n = new Conversation();
+            n.setRequest(r);
+            return conversations.save(n);
+        });
         Message m = new Message();
         m.setConversation(c); m.setSender(me); m.setBody(body.trim());
         m = messages.save(m);
+
         User other = me.getId().equals(r.getStudent().getId()) ? r.getListing().getTeacher() : r.getStudent();
-        notifications.send(other, me.getFullName() + " size yeni bir mesaj gönderdi.");
+        notifications.send(other, me.getFullName() + " size yeni bir mesaj gönderdi.", "/mesajlar/" + requestId);
         MessageRes out = map(m);
         Map<String, Object> payload = Map.of("type", "message", "requestId", requestId, "message", out);
         events.publishEvent(new PushEvent(r.getStudent().getId(), payload));

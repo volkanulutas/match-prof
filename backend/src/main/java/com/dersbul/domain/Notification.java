@@ -12,6 +12,7 @@ public class Notification {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false) private User user;
     @Column(nullable = false, length = 500) private String content;
+    @Column(length = 300) private String link;
     private boolean seen;
     private Instant createdAt = Instant.now();
 }

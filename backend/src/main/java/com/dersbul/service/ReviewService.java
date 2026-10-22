@@ -43,7 +43,7 @@ public class ReviewService {
         reviews.flush();
         l.setAvgRating(Math.round(reviews.averageRating(l.getId()) * 10.0) / 10.0);
         l.setReviewCount((int) reviews.countByListingId(l.getId()));
-        notifications.send(l.getTeacher(), student.getFullName() + " size " + r.rating() + " yıldız verdi.");
+        notifications.send(l.getTeacher(), student.getFullName() + " size " + r.rating() + " yıldız verdi.", "/ilan/" + l.getId());
         return new ReviewRes(rv.getId(), student.getFullName(), rv.getRating(), rv.getBody(), rv.getCreatedAt());
     }
 }

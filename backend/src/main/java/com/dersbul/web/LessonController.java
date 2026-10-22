@@ -28,6 +28,15 @@ public class LessonController {
     @GetMapping("/requests/mine")
     public List<RequestRes> myRequests(@AuthenticationPrincipal User me) { return requests.mine(me); }
 
+    @GetMapping("/requests/{id}")
+    public RequestRes request(@AuthenticationPrincipal User me, @PathVariable Long id) { return requests.get(me, id); }
+
+    /** Öğretmen onayı; body'de slotId verilirse seçilen zaman için ders de oluşturulur. */
+    @PostMapping("/requests/{id}/accept") @PreAuthorize("hasRole('TEACHER')")
+    public RequestRes accept(@AuthenticationPrincipal User me, @PathVariable Long id, @RequestBody(required = false) AcceptReq r) {
+        return requests.accept(me, id, r == null ? null : r.slotId());
+    }
+
     @PatchMapping("/requests/{id}/status")
     public RequestRes requestStatus(@AuthenticationPrincipal User me, @PathVariable Long id, @Valid @RequestBody StatusReq r) {
         return requests.changeStatus(me, id, r.status());

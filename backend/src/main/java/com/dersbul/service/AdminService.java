@@ -50,7 +50,7 @@ public class AdminService {
                 r.setStatus(ReportStatus.RESOLVED);
                 TeacherListing l = r.getListing();
                 l.setStatus(ListingStatus.SUSPENDED);
-                notifications.send(l.getTeacher(), "\"" + l.getTitle() + "\" ilanınız kurallara aykırı bulunduğu için askıya alındı.");
+                notifications.send(l.getTeacher(), "\"" + l.getTitle() + "\" ilanınız kurallara aykırı bulunduğu için askıya alındı.", "/ogretmen");
             }
             case "DISMISS" -> r.setStatus(ReportStatus.DISMISSED);
             default -> throw new ApiException(HttpStatus.BAD_REQUEST, "Geçersiz işlem");
@@ -86,7 +86,7 @@ public class AdminService {
         QualificationStatus s;
         try { s = QualificationStatus.valueOf(status); } catch (IllegalArgumentException e) { throw new ApiException(HttpStatus.BAD_REQUEST, "Geçersiz durum"); }
         q.setStatus(s);
-        notifications.send(q.getTeacher(), "\"" + q.getTitle() + "\" belgeniz " + (s == QualificationStatus.VERIFIED ? "doğrulandı." : "doğrulanamadı."));
+        notifications.send(q.getTeacher(), "\"" + q.getTitle() + "\" belgeniz " + (s == QualificationStatus.VERIFIED ? "doğrulandı." : "doğrulanamadı."), "/ogretmen");
         return new AdminQualificationRes(q.getId(), q.getTitle(), q.getStatus(), q.getTeacher().getId(), q.getTeacher().getFullName());
     }
 }

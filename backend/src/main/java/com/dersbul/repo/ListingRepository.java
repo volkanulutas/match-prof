@@ -12,6 +12,9 @@ public interface ListingRepository extends JpaRepository<TeacherListing, Long>, 
     List<TeacherListing> findAllByOrderByCreatedAtDesc();
     long countByStatus(ListingStatus status);
 
+    @Query("select l.category.id, count(l) from TeacherListing l where l.status = com.dersbul.domain.ListingStatus.ACTIVE group by l.category.id")
+    List<Object[]> countActiveByCategory();
+
     @Modifying
     @Query("update TeacherListing l set l.boosted = :b where l.teacher.id = :tid")
     void setBoosted(@Param("tid") Long teacherId, @Param("b") boolean boosted);

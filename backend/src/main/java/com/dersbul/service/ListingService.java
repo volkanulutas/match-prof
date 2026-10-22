@@ -26,8 +26,10 @@ public class ListingService {
 
     @Transactional(readOnly = true)
     public List<CategoryRes> categories() {
+        Map<Long, Long> counts = new HashMap<>();
+        for (Object[] row : listings.countActiveByCategory()) counts.put((Long) row[0], (Long) row[1]);
         return categories.findAllByOrderByGroupNameAscNameAsc().stream()
-            .map(c -> new CategoryRes(c.getId(), c.getName(), c.getSlug(), c.getGroupName())).toList();
+            .map(c -> new CategoryRes(c.getId(), c.getName(), c.getSlug(), c.getGroupName(), counts.getOrDefault(c.getId(), 0L))).toList();
     }
 
     @Transactional(readOnly = true)
@@ -38,16 +40,15 @@ public class ListingService {
             p.add(cb.equal(root.get("status"), ListingStatus.ACTIVE));
             Join<TeacherListing, Category> cat = root.join("category");
             if (category != null && !category.isBlank()) p.add(cb.equal(cat.get("slug"), category));
-            if (city != null && !city.isBlank()) p.add(cb.equal(cb.lower(root.<String>get("city")), city.trim().toLowerCase()));
+            if (city != null && !city.isBlank()) p.add(cb.equal(root.<String>get("city"), city.trim()));
             if (Boolean.TRUE.equals(online)) p.add(cb.isTrue(root.<Boolean>get("online")));
             if (maxPrice != null) p.add(cb.lessThanOrEqualTo(root.<BigDecimal>get("hourlyRate"), maxPrice));
             if (Boolean.TRUE.equals(firstFree)) p.add(cb.isTrue(root.<Boolean>get("firstLessonFree")));
             if (q != null && !q.isBlank()) {
-                String like = "%" + q.trim().toLowerCase() + "%";
-                p.add(cb.or(
-                    cb.like(cb.lower(root.<String>get("title")), like),
-                    cb.like(cb.lower(root.<String>get("description")), like),
-                    cb.like(cb.lower(cat.<String>get("name")), like)));
+                // Her sözcük ayrı aranır (VE); Türkçe karakter ve büyük/küçük harf farkı yok sayılır.
+                for (String tok : TextUtil.fold(q).trim().split("\\s+")) {
+                    if (!tok.isBlank()) p.add(cb.like(root.<String>get("searchText"), "%" + tok + "%"));
+                }
             }
             return cb.and(p.toArray(new Predicate[0]));
         };
@@ -121,6 +122,7 @@ public class ListingService {
         l.setExperienceYears(r.experienceYears());
         l.setEducation(r.education());
         l.setLanguages(r.languages());
+        l.setSearchText(TextUtil.listingText(l));
     }
 
     private TeacherListing find(Long id) {

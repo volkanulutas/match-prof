@@ -27,6 +27,8 @@ public class AccountController {
 
     @GetMapping("/notifications") public List<NotificationRes> list(@AuthenticationPrincipal User me) { return notifications.list(me); }
     @GetMapping("/notifications/unread-count") public Map<String, Long> unread(@AuthenticationPrincipal User me) { return Map.of("count", notifications.unread(me)); }
+    @PostMapping("/notifications/{id}/read") @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void readOne(@AuthenticationPrincipal User me, @PathVariable Long id) { notifications.markSeen(me, id); }
     @PostMapping("/notifications/read-all") @ResponseStatus(HttpStatus.NO_CONTENT)
     public void readAll(@AuthenticationPrincipal User me) { notifications.markAllSeen(me); }
 }

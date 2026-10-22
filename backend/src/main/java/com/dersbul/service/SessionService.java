@@ -36,7 +36,7 @@ public class SessionService {
         LessonSession s = new LessonSession();
         s.setRequest(req); s.setStartsAt(r.startsAt()); s.setEndsAt(r.endsAt());
         s = sessions.save(s);
-        notifications.send(req.getStudent(), teacher.getFullName() + " ders planladı: " + s.getStartsAt() + " (UTC).");
+        notifications.send(req.getStudent(), teacher.getFullName() + " ders planladı: " + TextUtil.dateTime(s.getStartsAt()) + ".", "/dersler");
         return mapper.session(s);
     }
 
@@ -61,12 +61,12 @@ public class SessionService {
                 if (!isTeacher) throw new ApiException(HttpStatus.FORBIDDEN, "Dersi yalnızca öğretmen tamamlandı işaretleyebilir");
                 if (s.getStartsAt().isAfter(Instant.now())) throw new ApiException(HttpStatus.CONFLICT, "Ders henüz başlamadı");
                 s.setStatus(SessionStatus.COMPLETED);
-                notifications.send(r.getStudent(), "Ders tamamlandı. Öğretmeninizi değerlendirebilirsiniz.");
+                notifications.send(r.getStudent(), "Ders tamamlandı. Öğretmeninizi değerlendirebilirsiniz.", "/dersler");
             }
             case "CANCELLED" -> {
                 s.setStatus(SessionStatus.CANCELLED);
                 User other = isTeacher ? r.getStudent() : r.getListing().getTeacher();
-                notifications.send(other, me.getFullName() + " planlanan dersi iptal etti.");
+                notifications.send(other, me.getFullName() + " planlanan dersi iptal etti.", "/dersler");
             }
             default -> throw new ApiException(HttpStatus.BAD_REQUEST, "Geçersiz durum");
         }

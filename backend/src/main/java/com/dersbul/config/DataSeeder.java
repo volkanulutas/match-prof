@@ -31,6 +31,10 @@ public class DataSeeder implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
+        // Eski kayıtlar için arama metnini üret (sütun sonradan eklendi).
+        listings.findAll().forEach(l -> {
+            if (l.getSearchText() == null) l.setSearchText(com.dersbul.service.TextUtil.listingText(l));
+        });
         if (categories.count() == 0) seedCategories();
         if (!adminEmail.isBlank() && adminPassword.length() >= 8 && !users.existsByEmailIgnoreCase(adminEmail))
             mk(adminEmail.trim().toLowerCase(), adminPassword, "Yönetici", Role.ADMIN, "");
@@ -107,6 +111,7 @@ public class DataSeeder implements CommandLineRunner {
         l.setTeacherHome(teacherHome); l.setStudentHome(studentHome); l.setFirstLessonFree(free);
         l.setExperienceYears(exp); l.setEducation(edu); l.setLanguages(langs);
         l.setAvgRating(rating); l.setReviewCount(reviews); l.setBoosted(boosted);
+        l.setSearchText(com.dersbul.service.TextUtil.listingText(l));
         listings.save(l);
     }
 
