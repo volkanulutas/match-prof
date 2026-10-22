@@ -1,4 +1,4 @@
-import { ILLER_ALFABETIK } from '../data/iller.js';
+import { ILLER_ALFABETIK } from '../lib/iller.js';
 
 /** İl seçici. allowEmpty ise ilk seçenek boş değerdir ("Tüm şehirler"). */
 export default function CitySelect({ value, onChange, allowEmpty = false, emptyLabel = 'Tüm şehirler', required = false, id }) {
