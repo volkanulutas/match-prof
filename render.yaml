@@ -1,0 +1,25 @@
+# Render Blueprint: tek tıkla web servisi (Docker) + ücretsiz Postgres.
+# Not: Render'ın ücretsiz Postgres'i oluşturulduktan 30 gün sonra sona erer (kendi belgesine göre).
+databases:
+  - name: dersbul-db
+    plan: free
+    databaseName: dersbul
+    user: dersbul
+
+services:
+  - type: web
+    name: dersbul
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/categories
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: dersbul-db
+          property: connectionString
+      - key: SPRING_PROFILES_ACTIVE
+        value: postgres
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SEED_DEMO          # deneme için true; herkese açacaksanız false yapıp ADMIN_EMAIL/ADMIN_PASSWORD ekleyin
+        value: "true"

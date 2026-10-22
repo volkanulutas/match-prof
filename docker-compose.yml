@@ -1,0 +1,33 @@
+# Tüm uygulamayı yerelde çalıştırır:      docker compose up --build
+# Yalnızca veritabanı (geliştirme için):  docker compose up -d db
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: dersbul
+      POSTGRES_USER: dersbul
+      POSTGRES_PASSWORD: dersbul
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dersbul -d dersbul"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: postgres
+      DB_URL: jdbc:postgresql://db:5432/dersbul
+      DB_USER: dersbul
+      DB_PASSWORD: dersbul
+      JWT_SECRET: ${JWT_SECRET:-local-only-secret-change-me-local-only-secret-change-me}
+      SEED_DEMO: "true"
+    ports: ["8080:8080"]
+
+volumes:
+  pgdata:
