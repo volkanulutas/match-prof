@@ -14,5 +14,5 @@ public class LessonSession {
     @Column(nullable = false) private Instant startsAt;
     @Column(nullable = false) private Instant endsAt;
     @Enumerated(EnumType.STRING) @Column(nullable = false) private SessionStatus status = SessionStatus.SCHEDULED;
-    private boolean reminderSent;
+    @Column(nullable = false, columnDefinition = "boolean default false") private boolean reminderSent;
 }

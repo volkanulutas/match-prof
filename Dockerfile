@@ -21,6 +21,6 @@ WORKDIR /app
 RUN useradd -r -u 1001 app && chown app /app
 COPY --from=api /api/target/*.jar app.jar
 USER app
-ENV JAVA_TOOL_OPTIONS="-Xmx300m -XX:+UseSerialGC -XX:TieredStopAtLevel=1 -XX:MaxMetaspaceSize=128m -Xss512k"
+ENV JAVA_TOOL_OPTIONS="-Xmx300m -XX:+UseSerialGC -XX:TieredStopAtLevel=1 -XX:MaxMetaspaceSize=128m -Xss512k -XX:+ExitOnOutOfMemoryError -Xlog:gc:stdout:time"
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]

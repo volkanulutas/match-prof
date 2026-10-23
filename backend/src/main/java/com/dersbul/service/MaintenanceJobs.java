@@ -3,6 +3,7 @@ package com.dersbul.service;
 import com.dersbul.domain.*;
 import com.dersbul.repo.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,6 +11,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
 @Component
+@Lazy(false)   // zamanlayıcılar tembel başlatmada da kaydolsun
 @RequiredArgsConstructor
 public class MaintenanceJobs {
     private final LessonRequestRepository requests;

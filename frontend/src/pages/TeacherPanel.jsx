@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { api, money, DAYS } from '../api.js';
 import { Alert, Empty } from '../components/Bits.jsx';
+import CitySelect, { CategorySelect } from '../components/CitySelect.jsx';
 
 const blank = {
   categoryId: '', title: '', description: '', hourlyRate: '', city: '',
@@ -29,17 +30,14 @@ function ListingForm({ cats, initial, onSaved, onCancel }) {
       <h3>{f.id ? 'İlanı düzenle' : 'Yeni ilan'}</h3>
       <Alert>{err}</Alert>
       <label>Ders alanı
-        <select required value={f.categoryId} onChange={set('categoryId')}>
-          <option value="">Seçin</option>
-          {cats.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
+        <CategorySelect required allowEmpty={false} valueKey="id" cats={cats} value={f.categoryId} onChange={(v) => setF({ ...f, categoryId: v })} />
       </label>
       <label>İlan başlığı<input required maxLength={140} value={f.title} onChange={set('title')} /></label>
       <label>Açıklama (en az 40 karakter)<textarea required minLength={40} rows={5} value={f.description} onChange={set('description')}
         placeholder="Deneyiminiz, yönteminiz ve hangi seviyelere ders verdiğiniz. Telefon, e-posta ve web adresi yazmayın." /></label>
       <div className="row wrapr">
         <label>Saatlik ücret (₺)<input type="number" min="1" required value={f.hourlyRate} onChange={set('hourlyRate')} /></label>
-        <label>Şehir<input required value={f.city} onChange={set('city')} /></label>
+        <label>İl<CitySelect required value={f.city} onChange={(v) => setF({ ...f, city: v })} /></label>
         <label>Deneyim (yıl)<input type="number" min="0" value={f.experienceYears} onChange={set('experienceYears')} /></label>
       </div>
       <label>Eğitim<input value={f.education} onChange={set('education')} /></label>

@@ -37,6 +37,7 @@ public class DatabaseUrlConfig {
         c.setConnectionTimeout(30_000);
         c.setInitializationFailTimeout(60_000);   // uykudaki veritabanının uyanmasını bekler
         c.setMaxLifetime(600_000);
+        c.setConnectionInitSql("SET lock_timeout = '30s'");   // DDL/sorgu kilit beklemesi takılı kalmasın
         return new HikariDataSource(c);
     }
 }

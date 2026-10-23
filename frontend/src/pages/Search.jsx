@@ -1,7 +1,68 @@
-import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { api, qs } from '../api.js';
 import { ListingCard, Empty, Alert } from '../components/Bits.jsx';
+import CitySelect, { CategorySelect } from '../components/CitySelect.jsx';
+
+/** Sonuç yoksa: filtreleri gevşeterek sonuç veren alternatifleri ve aynı gruptaki dolu kategorileri önerir. */
+function Suggestions({ f, cats, setParams }) {
+  const [alts, setAlts] = useState([]);
+
+  const variants = useMemo(() => {
+    const v = [];
+    if (f.city && !f.online) v.push({ label: 'Online ders olarak ara', p: { ...f, city: '', online: true } });
+    if (f.city) v.push({ label: 'Tüm şehirlerde ara', p: { ...f, city: '' } });
+    if (!f.online && !f.city) v.push({ label: 'Online ders olarak ara', p: { ...f, online: true } });
+    if (f.maxPrice) v.push({ label: 'Fiyat sınırını kaldır', p: { ...f, maxPrice: '' } });
+    if (f.firstLessonFree) v.push({ label: 'İlk ders ücretsiz şartını kaldır', p: { ...f, firstLessonFree: false } });
+    if (f.q && f.category) v.push({ label: 'Anahtar kelimeyi kaldır', p: { ...f, q: '' } });
+    if (f.category) v.push({ label: 'Tüm derslerde ara', p: { ...f, category: '' } });
+    return v;
+  }, [f.q, f.category, f.city, f.online, f.maxPrice, f.firstLessonFree]);  // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    let alive = true;
+    Promise.all(variants.map((v) => api('/listings' + qs({ ...v.p, size: 1 })).then((r) => ({ ...v, n: r.totalElements })).catch(() => ({ ...v, n: 0 }))))
+      .then((r) => alive && setAlts(r.filter((x) => x.n > 0)));
+    return () => { alive = false; };
+  }, [variants]);
+
+  const current = cats.find((c) => c.slug === f.category);
+  const related = current ? cats.filter((c) => c.groupName === current.groupName && c.slug !== current.slug && c.listingCount > 0) : [];
+  const popular = !current ? [...cats].filter((c) => c.listingCount > 0).sort((a, b) => b.listingCount - a.listingCount).slice(0, 6) : [];
+
+  const apply = (p) => {
+    const clean = {};
+    Object.entries(p).forEach(([k, v]) => { if (v !== '' && v !== false && !(k === 'sort' && v === 'best') && k !== 'page') clean[k] = v; });
+    setParams(clean);
+  };
+
+  return (
+    <div className="card suggest">
+      <h3>Bu aramayla sonuç bulamadık. Şunları deneyebilirsiniz:</h3>
+      {alts.length > 0 && (
+        <ul className="plain">
+          {alts.map((a) => (
+            <li key={a.label}><button className="linkbtn" onClick={() => apply(a.p)}>{a.label}</button> <span className="muted small">({a.n} ilan)</span></li>
+          ))}
+        </ul>
+      )}
+      {related.length > 0 && (
+        <>
+          <p className="muted small">Benzer dersler</p>
+          <div className="chips">{related.map((c) => <Link key={c.id} className="chip link" to={`/ara?category=${c.slug}`}>{c.name} ({c.listingCount})</Link>)}</div>
+        </>
+      )}
+      {popular.length > 0 && (
+        <>
+          <p className="muted small">Popüler dersler</p>
+          <div className="chips">{popular.map((c) => <Link key={c.id} className="chip link" to={`/ara?category=${c.slug}`}>{c.name} ({c.listingCount})</Link>)}</div>
+        </>
+      )}
+      {alts.length === 0 && related.length === 0 && popular.length === 0 && <p className="muted">Filtreleri temizleyip yeniden deneyin.</p>}
+    </div>
+  );
+}
 
 export default function Search() {
   const [params, setParams] = useSearchParams();
@@ -33,25 +94,21 @@ export default function Search() {
     <div className="wrap search">
       <aside className="filters card">
         <h3>Filtreler</h3>
-        <label>Ders veya konu
-          <input defaultValue={f.q} key={'q' + f.q} onKeyDown={(e) => e.key === 'Enter' && set({ q: e.target.value })}
-                 onBlur={(e) => e.target.value !== f.q && set({ q: e.target.value })} placeholder="ör. İngilizce" />
-        </label>
-        <label>Kategori
-          <select value={f.category} onChange={(e) => set({ category: e.target.value })}>
-            <option value="">Tümü</option>
-            {cats.map((c) => <option key={c.id} value={c.slug}>{c.name}</option>)}
-          </select>
+        <label>Ders alanı
+          <CategorySelect cats={cats} value={f.category} onChange={(v) => set({ category: v })} />
         </label>
         <label>Şehir
-          <input defaultValue={f.city} key={'c' + f.city} onBlur={(e) => e.target.value !== f.city && set({ city: e.target.value })}
-                 onKeyDown={(e) => e.key === 'Enter' && set({ city: e.target.value })} placeholder="ör. Ankara" />
+          <CitySelect value={f.city} onChange={(v) => set({ city: v })} allowEmpty />
+        </label>
+        <label className="check"><input type="checkbox" checked={f.online} onChange={(e) => set({ online: e.target.checked })} /> Online ders</label>
+        <label>Anahtar kelime
+          <input defaultValue={f.q} key={'q' + f.q} onKeyDown={(e) => e.key === 'Enter' && set({ q: e.target.value })}
+                 onBlur={(e) => e.target.value !== f.q && set({ q: e.target.value })} placeholder="ör. TYT, konuşma, ogretmen adı" />
         </label>
         <label>En yüksek saatlik ücret (₺)
           <input type="number" min="0" defaultValue={f.maxPrice} key={'p' + f.maxPrice}
                  onBlur={(e) => e.target.value !== f.maxPrice && set({ maxPrice: e.target.value })} />
         </label>
-        <label className="check"><input type="checkbox" checked={f.online} onChange={(e) => set({ online: e.target.checked })} /> Online ders</label>
         <label className="check"><input type="checkbox" checked={f.firstLessonFree} onChange={(e) => set({ firstLessonFree: e.target.checked })} /> İlk ders ücretsiz</label>
         <label>Sıralama
           <select value={f.sort} onChange={(e) => set({ sort: e.target.value })}>
@@ -66,9 +123,9 @@ export default function Search() {
 
       <section>
         <Alert>{err}</Alert>
-        {!res && !err && <p className="muted">Öğretmenler yükleniyor…</p>}
-        {res && <p className="muted">{res.totalElements} öğretmen bulundu</p>}
-        {res && res.content.length === 0 && <Empty>Bu filtrelerle sonuç yok. Şehri veya ücret sınırını kaldırmayı deneyin.</Empty>}
+        {!res && !err && <p className="muted">Öğretmenler yükleniyor… (site uykudaysa ilk açılış bir dakika sürebilir)</p>}
+        {res && <p className="muted">{res.totalElements} öğretmen bulundu. Kartlardaki “Karşılaştır” kutusuyla en fazla 3 ilanı yan yana görebilirsiniz.</p>}
+        {res && res.content.length === 0 && <Suggestions f={f} cats={cats} setParams={setParams} />}
         <div className="grid two">{res?.content.map((l) => <ListingCard key={l.id} l={l} />)}</div>
         {res && res.totalPages > 1 && (
           <div className="pager">

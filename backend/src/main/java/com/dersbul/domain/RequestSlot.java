@@ -12,5 +12,5 @@ public class RequestSlot {
     @ManyToOne(fetch = FetchType.LAZY, optional = false) private LessonRequest request;
     @Column(nullable = false) private Instant startsAt;
     @Column(nullable = false) private Instant endsAt;
-    private boolean chosen;
+    @Column(nullable = false, columnDefinition = "boolean default false") private boolean chosen;
 }
